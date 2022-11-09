@@ -4,6 +4,7 @@ import re
 import os
 import csv
 import unittest
+#Worked with: Zoe Vickery
 
 
 def get_listings_from_search_results(html_file):
@@ -18,15 +19,53 @@ def get_listings_from_search_results(html_file):
     The listing id is found in the url of a listing. For example, for
         https://www.airbnb.com/rooms/1944564
     the listing id is 1944564.
-.
 
     [
         ('Title of Listing 1', 'Cost 1', 'Listing ID 1'),  # format
         ('Loft in Mission District', 210, '1944564'),  # example
     ]
     """
-    pass
+    path = os.path.dirname(os.path.abspath(__file__)) + os.sep
+    f = open(path + html_file)
+    content = f.read()
+    soup = BeautifulSoup(content, 'html.parser')  
+    tup_lst = []
+    lst1 = []
+    lst2 = []
+    new_lst2 = []
+    lst3 = []
+    new_lst3 = []
 
+    tags1 = soup.find_all('div', class_ = "t1jojoys")
+    for tag in tags1:
+        lst1.append(tag.text)
+
+    tags2 = soup.find_all('span', class_ = "a8jt5op")
+    for tag in tags2:
+        lst2.append(tag.text)
+
+    reg_ex1 = r'^\$(\d+) '
+    for line in lst2:
+        x = re.findall(reg_ex1, line)
+        for i in x:
+            new_lst2.append(i)
+
+    tags3 = soup.find_all('meta', itemprop="url")
+    for tag in tags3:
+        lst3.append(tag.get('content', None))
+
+    reg_ex2 = r'^www\.airbnb\.com\/rooms\/[plus\/]*(\d+)\?'
+    for line in lst3:
+        x = re.findall(reg_ex2, line)
+        for i in x:
+            new_lst3.append(i)
+    
+    tup_lst = zip(lst1, new_lst2, new_lst3)
+    tup_lst = list(tup_lst)
+    return tup_lst
+
+    pass
+print(get_listings_from_search_results("html_files/mission_district_search_results.html"))
 
 def get_listing_information(listing_id):
     """
@@ -238,8 +277,8 @@ class TestCases(unittest.TestCase):
         pass
 
 
-if __name__ == '__main__':
-    database = get_detailed_listing_database("html_files/mission_district_search_results.html")
-    write_csv(database, "airbnb_dataset.csv")
-    check_policy_numbers(database)
-    unittest.main(verbosity=2)
+# if __name__ == '__main__':
+#     database = get_detailed_listing_database("html_files/mission_district_search_results.html")
+#     write_csv(database, "airbnb_dataset.csv")
+#     check_policy_numbers(database)
+#     unittest.main(verbosity=2)
