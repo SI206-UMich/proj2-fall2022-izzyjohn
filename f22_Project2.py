@@ -48,7 +48,7 @@ def get_listings_from_search_results(html_file):
     for line in lst2:
         x = re.findall(reg_ex1, line)
         for i in x:
-            new_lst2.append(i)
+            new_lst2.append(int(i))
 
     tags3 = soup.find_all('meta', itemprop="url")
     for tag in tags3:
@@ -65,7 +65,7 @@ def get_listings_from_search_results(html_file):
     return tup_lst
 
     pass
-print(get_listings_from_search_results("html_files/mission_district_search_results.html"))
+#print(get_listings_from_search_results("html_files/mission_district_search_results.html"))
 
 def get_listing_information(listing_id):
     """
@@ -91,8 +91,45 @@ def get_listing_information(listing_id):
         number of bedrooms
     )
     """
+    path = os.path.dirname(os.path.abspath(__file__)) + os.sep
+    name = f'html_files/listing_{listing_id}.html'
+    f = open(path + name)
+    content = f.read()
+    soup = BeautifulSoup(content, 'html.parser')
+
+    tag1 = soup.find('li', class_ = 'f19phm7j')
+    reg_ex1 = r'^Policy number: (\w*[\-]*\w*)'
+    policy_number = re.findall(reg_ex1, tag1.text)
+
+    place_lst = []
+    tag2 = soup.find('h2', class_ = '_14i3z6h')
+    
+    if(tag2.text.split()[0] == "Private"):
+        place_lst.append(tag2.text.split()[0])
+    elif(tag2.text.split()[0] == 'Shared'):
+        place_lst.append(tag2.text.split()[0])
+    else:
+        place_lst.append("Entire")
+    
+    tag3 = soup.find_all('span')
+    reg_ex3 = r'^(\d) bedroom'
+    bedroom_lst = []
+    for x in tag3:
+        found = re.findall(reg_ex3, x.text)
+        for i in found:
+            bedroom_lst.append(int(i))
+    
+    tup = (policy_number[0], place_lst[0], bedroom_lst[0])
+    return tup
+    
     pass
 
+# print(get_listing_information("1623609"))
+# print(get_listing_information("1944564"))
+# print(get_listing_information("1550913"))
+# print(get_listing_information("4616596"))
+# print(get_listing_information("6600081"))
+# print(get_listing_information("50010586"))
 
 def get_detailed_listing_database(html_file):
     """
@@ -188,8 +225,9 @@ class TestCases(unittest.TestCase):
         # check that each item in the list is a tuple
 
         # check that the first title, cost, and listing id tuple is correct (open the search results html and find it)
-
+        #self.assertEqual(listings[0], )
         # check that the last title is correct (open the search results html and find it)
+        #self.assertEqual(listings[-1], )
         pass
 
     def test_get_listing_information(self):
