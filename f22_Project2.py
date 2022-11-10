@@ -4,7 +4,7 @@ import re
 import os
 import csv
 import unittest
-#Worked with: Zoe Vickery
+#Worked with: Zoe Vickery and Reese Salgado 
 
 
 def get_listings_from_search_results(html_file):
@@ -98,28 +98,36 @@ def get_listing_information(listing_id):
     soup = BeautifulSoup(content, 'html.parser')
 
     tag1 = soup.find('li', class_ = 'f19phm7j')
-    reg_ex1 = r'^Policy number: (\w*[\-]*\w*)'
-    policy_number = re.findall(reg_ex1, tag1.text)
-
-    place_lst = []
-    tag2 = soup.find('h2', class_ = '_14i3z6h')
-    
-    if(tag2.text.split()[0] == "Private"):
-        place_lst.append(tag2.text.split()[0])
-    elif(tag2.text.split()[0] == 'Shared'):
-        place_lst.append(tag2.text.split()[0])
+    reg_ex1 = r'^Policy number: ((?:\w|\d)*[\-]*\d+\w*)'
+    #(\w*[\-]*\w*)'
+    found_num = re.findall(reg_ex1, tag1.text)
+    if(len(found_num)==0):
+        pol_pattern = r'Policy number: (?:P|p)ending'
+        found_num = re.findall(pol_pattern, tag1.text)
+        if(len(found_num)== 0):
+            policy_number = "exempt"
+        else:
+            policy_number = "pending"
     else:
-        place_lst.append("Entire")
+        policy_number = found_num[0]
+
+    tag2 = soup.find('h2', class_ = '_14i3z6h')
+    if(tag2.text.split()[0] == "Private"):
+        place_type = "Private Room"
+    elif(tag2.text.split()[0] == 'Shared'):
+        place_type = "Shared Room"
+    else:
+        place_type = "Entire Room"
     
     tag3 = soup.find_all('span')
     reg_ex3 = r'^(\d) bedroom'
-    bedroom_lst = []
+    bedrooms = ""
     for x in tag3:
         found = re.findall(reg_ex3, x.text)
         for i in found:
-            bedroom_lst.append(int(i))
+            bedrooms = int(i)
     
-    tup = (policy_number[0], place_lst[0], bedroom_lst[0])
+    tup = (policy_number, place_type, bedrooms)
     return tup
     
     pass
@@ -145,8 +153,15 @@ def get_detailed_listing_database(html_file):
         ...
     ]
     """
+    lst = []
+    function1 = get_listings_from_search_results(html_file)
+    for x in function1:
+        function2 = get_listing_information(x[2])
+        tup = (x[0], x[1], x[2], function2[0], function2[1], function2[2])
+        lst.append(tup)
+    return lst
     pass
-
+#print(get_detailed_listing_database("html_files/mission_district_search_results.html"))
 
 def write_csv(data, filename):
     """
