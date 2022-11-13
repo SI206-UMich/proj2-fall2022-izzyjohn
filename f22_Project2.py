@@ -101,15 +101,14 @@ def get_listing_information(listing_id):
 
     tag1 = soup.find('li', class_ = 'f19phm7j')
     reg_ex1 = r'^Policy number: ((?:\w|\d)*[\-]*\d+\w*)'
-    #(\w*[\-]*\w*)'
     found_num = re.findall(reg_ex1, tag1.text)
     if(len(found_num)==0):
-        pol_pattern = r'Policy number: (?:P|p)ending'
+        pol_pattern = r'Policy number: .*(?:P|p)ending'
         found_num = re.findall(pol_pattern, tag1.text)
         if(len(found_num)== 0):
-            policy_number = "exempt"
+            policy_number = "Exempt"
         else:
-            policy_number = "pending"
+            policy_number = "Pending"
     else:
         policy_number = found_num[0]
 
@@ -123,7 +122,7 @@ def get_listing_information(listing_id):
     
     tag3 = soup.find_all('span')
     reg_ex3 = r'^(\d) bedroom'
-    bedrooms = ""
+    bedrooms = 1
     for x in tag3:
         found = re.findall(reg_ex3, x.text)
         for i in found:
@@ -226,8 +225,38 @@ def check_policy_numbers(data):
     ]
 
     """
-    pass
+    lst = []
+    for x in data:
+        new_tup = (x[2], x[3])
+        lst.append(new_tup)
 
+    new_lst = []
+    for x in lst:
+        if(x[1] != "Pending") and (x[1] != "Exempt"):
+            new_lst.append(x)
+
+    pattern = r'20\d{2}-00\d{4}STR|STR-000\d{4}'
+    final_lst = []
+    for x in new_lst:
+        num = x[1]
+        found = re.findall(pattern, num)
+        for i in found:
+            final_lst.append(i)
+
+    invalid_lst = []
+    for x in new_lst:
+        if x[1] not in final_lst:
+            invalid_lst.append(x)
+
+    invalid_lst_id = []
+    for x in invalid_lst:
+        val = x[0]
+        invalid_lst_id.append(val)
+
+    return invalid_lst_id
+    pass
+# detailed_database = get_detailed_listing_database("html_files/mission_district_search_results.html")
+# print(check_policy_numbers(detailed_database))
 
 def extra_credit(listing_id):
     """
@@ -332,27 +361,28 @@ class TestCases(unittest.TestCase):
         # check that there are 21 lines in the csv
         self.assertEqual(len(csv_lines), 21)
         # check that the header row is correct
-
+        self.assertEqual(csv_lines[0], ('Listing Title,Cost,Listing ID,Policy Number,Place Type,Number of Bedrooms').split(","))
         # check that the next row is Private room in Mission District,82,51027324,Pending,Private Room,1
-
+        self.assertEqual(csv_lines[1], ('Private room in Mission District,82,51027324,Pending,Private Room,1').split(","))
         # check that the last row is Apartment in Mission District,399,28668414,Pending,Entire Room,2
-
+        self.assertEqual(csv_lines[-1], ('Apartment in Mission District,399,28668414,Pending,Entire Room,2').split(","))
         pass
 
-    # def test_check_policy_numbers(self):
-    #     # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
-    #     # and save the result to a variable
-    #     detailed_database = get_detailed_listing_database("html_files/mission_district_search_results.html")
-    #     # call check_policy_numbers on the variable created above and save the result as a variable
-    #     invalid_listings = check_policy_numbers(detailed_database)
-    #     # check that the return value is a list
-    #     self.assertEqual(type(invalid_listings), list)
-    #     # check that there is exactly one element in the string
-
-    #     # check that the element in the list is a string
-
-    #     # check that the first element in the list is '16204265'
-    #     pass
+    def test_check_policy_numbers(self):
+        # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
+        # and save the result to a variable
+        detailed_database = get_detailed_listing_database("html_files/mission_district_search_results.html")
+        # call check_policy_numbers on the variable created above and save the result as a variable
+        invalid_listings = check_policy_numbers(detailed_database)
+        # check that the return value is a list
+        self.assertEqual(type(invalid_listings), list)
+        # check that there is exactly one element in the string
+        self.assertEqual(len(invalid_listings), 1)
+        # check that the element in the list is a string
+        self.assertEqual(type(invalid_listings[0]), str)
+        # check that the first element in the list is '16204265'
+        self.assertEqual(invalid_listings[0], '16204265')
+        pass
 
 
 if __name__ == '__main__':
